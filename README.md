@@ -48,14 +48,6 @@ The project is built with a deliberately small, dependency-light stack to keep t
 | **Tooling**  | `node:test` (zero-dependency test runner), Docker, GitHub Actions CI |
 | **Data**     | [donnees.montreal.ca](https://donnees.montreal.ca/dataset/liste-central-condamnations-salubrite-logements) open dataset |
 
-## 🖼️ Screenshots
-
-> Add your own captures to `docs/screenshots/` (see [docs/screenshots/README.md](docs/screenshots/README.md)).
-
-| Map & reports | Reporting form | Admin panel |
-| ------------- | -------------- | ----------- |
-| ![Map view](docs/screenshots/map.png) | ![Report form](docs/screenshots/form.png) | ![Admin panel](docs/screenshots/admin.png) |
-
 ## 🚀 Getting Started
 
 ### Prerequisites
