@@ -1,0 +1,31 @@
+{
+  "name": "horizon-salubrite",
+  "version": "1.0.0",
+  "description": "Web app for citizens of Montréal to report and map unsanitary housing, cross-referenced with the city's open data on sanitation convictions.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch --env-file=.env server.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "import": "node import-violations.js"
+  },
+  "keywords": [
+    "express",
+    "sqlite",
+    "leaflet",
+    "open-data",
+    "geocoding",
+    "montreal",
+    "civic-tech"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "multer": "^2.1.1",
+    "sqlite3": "^6.0.1"
+  }
+}

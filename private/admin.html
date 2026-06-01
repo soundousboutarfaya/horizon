@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Horizon</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body { background: #0f172a; color: #f1f5f9; }
+    .admin-header {
+      padding: 32px 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .admin-header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #60a5fa, #c084fc);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .admin-header .muted {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .admin-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .admin-stat {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 12px 20px;
+      border-radius: 12px;
+    }
+    .admin-stat strong { display: block; font-size: 22px; color: #60a5fa; font-weight: 800; }
+    .admin-stat span { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; }
+
+    .admin-table-wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px 40px;
+      overflow-x: auto;
+    }
+    table.admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      overflow: hidden;
+      font-size: 14px;
+    }
+    table.admin-table th, table.admin-table td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      vertical-align: top;
+    }
+    table.admin-table th {
+      background: rgba(255,255,255,0.05);
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+    }
+    table.admin-table tr:hover td { background: rgba(96,165,250,0.05); }
+    table.admin-table a { color: #60a5fa; }
+    .admin-table .desc { max-width: 280px; color: #cbd5e1; font-size: 13px; }
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .btn-danger:hover { background: #b91c1c; }
+    .admin-table img { max-width: 80px; border-radius: 8px; }
+    .empty-admin { text-align: center; padding: 60px 20px; color: #94a3b8; }
+    .back-link {
+      color: #60a5fa;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <header class="admin-header">
+    <div>
+      <h1>Panneau d'administration</h1>
+      <p class="muted">Accès confidentiel — données complètes avec identité des signalants. <a href="/" class="back-link">← Retour au site public</a></p>
+    </div>
+    <div class="admin-stats">
+      <div class="admin-stat"><strong id="adminTotal">—</strong><span>signalements</span></div>
+      <div class="admin-stat"><strong id="adminGeolocated">—</strong><span>géolocalisés</span></div>
+      <div class="admin-stat"><strong id="adminWithPhoto">—</strong><span>avec photo</span></div>
+    </div>
+  </header>
+
+  <div class="admin-table-wrap">
+    <table class="admin-table" id="adminTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Adresse</th>
+          <th>Type</th>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Signalant</th>
+          <th>Email</th>
+          <th>Photo</th>
+          <th>GPS</th>
+          <th>Créé le</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="adminBody"><tr><td colspan="11" class="empty-admin">Chargement...</td></tr></tbody>
+    </table>
+  </div>
+
+  <script>
+    function esc(v) {
+      return String(v ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+    }
+
+    async function loadAdminReports() {
+      const body = document.getElementById("adminBody");
+      try {
+        const res = await fetch("/api/admin/reports");
+        if (!res.ok) throw new Error("Erreur " + res.status);
+        const data = await res.json();
+
+        document.getElementById("adminTotal").textContent = data.length;
+        document.getElementById("adminGeolocated").textContent = data.filter(r => r.latitude != null).length;
+        document.getElementById("adminWithPhoto").textContent = data.filter(r => r.photoPath).length;
+
+        if (data.length === 0) {
+          body.innerHTML = `<tr><td colspan="11" class="empty-admin">Aucun signalement dans la base.</td></tr>`;
+          return;
+        }
+
+        body.innerHTML = data.map(r => `
+          <tr data-id="${esc(r.id)}">
+            <td>#${esc(r.id)}</td>
+            <td>${esc(r.address)}</td>
+            <td>${esc(r.issueType)}</td>
+            <td>${esc(r.reportDate)}</td>
+            <td class="desc">${esc(r.description)}</td>
+            <td>${esc(r.reporterName)}</td>
+            <td><a href="mailto:${esc(r.reporterEmail)}">${esc(r.reporterEmail)}</a></td>
+            <td>${r.photoPath ? `<a href="${esc(r.photoPath)}" target="_blank"><img src="${esc(r.photoPath)}" alt=""></a>` : "—"}</td>
+            <td>${r.latitude != null ? `${Number(r.latitude).toFixed(4)}, ${Number(r.longitude).toFixed(4)}` : "—"}</td>
+            <td>${esc(r.createdAt)}</td>
+            <td><button class="btn-danger" data-delete="${esc(r.id)}">Supprimer</button></td>
+          </tr>
+        `).join("");
+
+        body.querySelectorAll("[data-delete]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const id = btn.dataset.delete;
+            if (!confirm(`Supprimer définitivement le signalement #${id} ?`)) return;
+            const res = await fetch(`/api/admin/reports/${id}`, { method: "DELETE" });
+            if (res.ok) loadAdminReports();
+            else alert("Erreur lors de la suppression.");
+          });
+        });
+      } catch (e) {
+        body.innerHTML = `<tr><td colspan="11" class="empty-admin">Impossible de charger les données.</td></tr>`;
+      }
+    }
+
+    loadAdminReports();
+  </script>
+</body>
+</html>

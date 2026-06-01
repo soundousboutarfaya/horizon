@@ -1,0 +1,20 @@
+services:
+  horizon:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-change-me-please}
+      - HORIZON_DB=/data/horizon.db
+    volumes:
+      # Persist the database and uploaded photos across container restarts.
+      - horizon-data:/data
+      - horizon-uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  horizon-data:
+  horizon-uploads:

@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Horizon — plateforme de signalement de logements insalubres à Montréal." />
+  <title>Horizon — Signalement de logements insalubres</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+</head>
+<body>
+  <nav class="site-nav" aria-label="Navigation principale">
+    <div class="navbar">
+      <a class="logo" href="#top" aria-label="Horizon — accueil">
+        <span class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="32" height="32">
+            <defs>
+              <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#6366f1"/>
+                <stop offset="100%" stop-color="#8b5cf6"/>
+              </linearGradient>
+            </defs>
+            <circle cx="16" cy="14" r="7" fill="url(#logoGrad)"/>
+            <rect x="3" y="22" width="26" height="2" rx="1" fill="#0f172a"/>
+          </svg>
+        </span>
+        <span class="logo-text">Horizon<span class="logo-dot">.</span></span>
+      </a>
+      <button id="openBtn" class="btn primary" type="button">+ Signaler une adresse</button>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
+    <section class="hero-content">
+      <p class="tag">Plateforme citoyenne — Montréal</p>
+      <h1>Rendre visibles les logements <span class="accent">insalubres</span> de Montréal.</h1>
+      <p class="hero-subtitle">Un outil collectif pour documenter les lieux qui mettent la santé des locataires en danger, faciliter la recherche de recours, et permettre aux autorités d'intervenir.</p>
+      <div class="hero-stats">
+        <div class="stat">
+          <strong id="statCount">—</strong>
+          <span>signalements actifs</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <strong id="statViolations">—</strong>
+          <span>condamnations officielles</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <strong>100%</strong>
+          <span>anonyme pour les voisins</span>
+        </div>
+      </div>
+    </section>
+    <p class="hero-photo-credit">
+      Photo : <a href="https://unsplash.com/photos/the-ceiling-of-a-run-down-room-with-peeling-paint-jSKNQU0PqI8" target="_blank" rel="noopener">Vero Eve</a> · Unsplash
+    </p>
+  </header>
+
+  <section class="search-box" aria-label="Rechercher une adresse signalée">
+    <form id="searchForm" role="search">
+      <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/>
+        <path d="m20 20-3.5-3.5"/>
+      </svg>
+      <label for="searchInput" class="visually-hidden">Adresse à rechercher</label>
+      <input id="searchInput" type="text" placeholder="Rechercher une adresse signalée..." required />
+      <button class="btn primary" type="submit">Rechercher</button>
+    </form>
+  </section>
+
+  <section id="searchResult" class="container" aria-live="polite"></section>
+
+  <section class="container-wide reveal" aria-labelledby="dangersTitle">
+    <div class="danger-section">
+      <div class="danger-header">
+        <p class="tag warning-tag">MISE EN GARDE</p>
+        <h2 id="dangersTitle">Les dangers de l'insalubrité</h2>
+        <p class="danger-intro">
+          Vivre dans un logement insalubre n'est pas juste inconfortable — c'est un risque réel
+          pour la santé physique et mentale, particulièrement pour les enfants, les personnes âgées
+          et les personnes immunodéprimées.
+        </p>
+      </div>
+
+      <div class="danger-grid">
+        <article class="danger-card">
+          <div class="danger-icon-box respiratory">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2v8"/>
+              <path d="M8 6c-3 0-5 2-5 6 0 4 2 8 5 8 1.5 0 2-1 2-3v-5"/>
+              <path d="M16 6c3 0 5 2 5 6 0 4-2 8-5 8-1.5 0-2-1-2-3v-5"/>
+            </svg>
+          </div>
+          <h3>Problèmes respiratoires</h3>
+          <p>La moisissure et l'humidité favorisent l'asthme, les bronchites chroniques et les pneumonies.</p>
+        </article>
+
+        <article class="danger-card">
+          <div class="danger-icon-box allergy">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2a5 5 0 0 0-5 5c0 3 5 10 5 10s5-7 5-10a5 5 0 0 0-5-5z"/>
+              <circle cx="12" cy="7" r="1.5"/>
+              <path d="M5 20h14"/>
+            </svg>
+          </div>
+          <h3>Allergies et irritations</h3>
+          <p>Démangeaisons, yeux rouges, éternuements, eczéma : les spores et nuisibles déclenchent des réactions quotidiennes.</p>
+        </article>
+
+        <article class="danger-card">
+          <div class="danger-icon-box infection">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>
+            </svg>
+          </div>
+          <h3>Infections</h3>
+          <p>Bactéries, champignons et parasites prolifèrent : gastro-entérites, infections cutanées, mycoses répétées.</p>
+        </article>
+
+        <article class="danger-card">
+          <div class="danger-icon-box child">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="6" r="3"/>
+              <path d="M6 22v-6a6 6 0 0 1 12 0v6"/>
+            </svg>
+          </div>
+          <h3>Risques accrus pour les enfants</h3>
+          <p>Retards de développement, absentéisme scolaire et sensibilité respiratoire élevée chez les plus jeunes.</p>
+        </article>
+
+        <article class="danger-card">
+          <div class="danger-icon-box mental">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 3a5 5 0 0 0-5 5c0 2 1 3 1 5s-2 3-2 5 2 3 4 3h6c2 0 4-1 4-3s-1-2-1-4 2-2 2-5a5 5 0 0 0-5-5 3 3 0 0 0-4 0z"/>
+            </svg>
+          </div>
+          <h3>Santé mentale</h3>
+          <p>Stress chronique, anxiété, troubles du sommeil et isolement : l'habitat dégrade le bien-être psychologique.</p>
+        </article>
+
+        <article class="danger-card">
+          <div class="danger-icon-box legal">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3v18"/>
+              <path d="M5 8h14"/>
+              
+              <path d="M5 8l-2 6a4 4 0 0 0 8 0l-2-6"/>
+              <path d="M19 8l-2 6a4 4 0 0 0 8 0l-2-6"/>
+            </svg>
+          </div>
+          <h3>Tu as des droits</h3>
+          <p>Au Québec, le propriétaire doit fournir un logement en bon état. Tu peux exiger des réparations, une baisse de loyer, ou résilier le bail.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-wide reveal" aria-labelledby="testimonialsTitle">
+    <div class="section-head-centered">
+      <p class="tag">DERRIÈRE LES CHIFFRES</p>
+      <h2 id="testimonialsTitle">Des voix qu'on n'entend jamais</h2>
+      <p class="resources-lead">L'insalubrité, ce n'est pas une statistique. Ce sont des familles, des enfants, des aîné·e·s qui vivent au quotidien dans des conditions qui les rendent malades. Voici quatre témoignages réels rapportés par les médias québécois — clique sur une carte pour lire l'article complet.</p>
+    </div>
+
+    <div class="testimonials-grid">
+      <a class="testimonial-card" href="https://ici.radio-canada.ca/nouvelle/723950/insalubrite-logements-comites-montreal-tour" target="_blank" rel="noopener" aria-label="Lire l'article sur Joyce O'Neill — Radio-Canada">
+        <svg class="testimonial-quote" viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true">
+          <path d="M7.17 6A5.17 5.17 0 0 0 2 11.17V18h6v-6H4.83A2.83 2.83 0 0 1 7.17 9.34V6zm10 0A5.17 5.17 0 0 0 12 11.17V18h6v-6h-3.17A2.83 2.83 0 0 1 17.17 9.34V6z"/>
+        </svg>
+        <p class="testimonial-text">«Ça n'a l'air de rien de l'extérieur, mais c'est pourri à l'intérieur. Il faut qu'il y ait des stratégies beaucoup plus sévères au niveau des logements, parce que ça met la vie d'enfants en danger. Moi, je le fais pour mon fils.»</p>
+        <footer class="testimonial-author">
+          <div class="testimonial-avatar avatar-rose" aria-hidden="true">J</div>
+          <div>
+            <strong>Joyce O'Neill</strong>
+            <span>Mère monoparentale · Villeray</span>
+          </div>
+        </footer>
+        <span class="testimonial-tag tag-respiratory">Moisissure · enfant malade</span>
+        <span class="testimonial-source">Radio-Canada · 2015</span>
+      </a>
+
+      <a class="testimonial-card" href="https://ici.radio-canada.ca/nouvelle/723950/insalubrite-logements-comites-montreal-tour" target="_blank" rel="noopener" aria-label="Lire l'article sur Ricardo — Radio-Canada">
+        <svg class="testimonial-quote" viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true">
+          <path d="M7.17 6A5.17 5.17 0 0 0 2 11.17V18h6v-6H4.83A2.83 2.83 0 0 1 7.17 9.34V6zm10 0A5.17 5.17 0 0 0 12 11.17V18h6v-6h-3.17A2.83 2.83 0 0 1 17.17 9.34V6z"/>
+        </svg>
+        <p class="testimonial-text">«Il y avait des moisissures cachées dans mon propre appartement, c'est ça qui me causait des problèmes de santé comme si j'avais la grippe, mais la grippe tout le temps.»</p>
+        <footer class="testimonial-author">
+          <div class="testimonial-avatar avatar-amber" aria-hidden="true">R</div>
+          <div>
+            <strong>Ricardo</strong>
+            <span>Locataire · Parc-Extension</span>
+          </div>
+        </footer>
+        <span class="testimonial-tag tag-respiratory">Moisissure cachée · santé</span>
+        <span class="testimonial-source">Radio-Canada · 2015</span>
+      </a>
+
+      <a class="testimonial-card" href="https://ici.radio-canada.ca/nouvelle/1153109/infestation-punaises-de-lit-rats-locataires-montreal-nord" target="_blank" rel="noopener" aria-label="Lire l'article sur Jessica Fauvelle — Radio-Canada">
+        <svg class="testimonial-quote" viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true">
+          <path d="M7.17 6A5.17 5.17 0 0 0 2 11.17V18h6v-6H4.83A2.83 2.83 0 0 1 7.17 9.34V6zm10 0A5.17 5.17 0 0 0 12 11.17V18h6v-6h-3.17A2.83 2.83 0 0 1 17.17 9.34V6z"/>
+        </svg>
+        <p class="testimonial-text">«J'ai dû aller à la clinique, on m'a prescrit un antibiotique et on m'a dit que c'était bien des piqûres de punaises de lit. On ne peut pas rester là, c'est invivable. On est à bout de ressources.»</p>
+        <footer class="testimonial-author">
+          <div class="testimonial-avatar avatar-violet" aria-hidden="true">J</div>
+          <div>
+            <strong>Jessica Fauvelle</strong>
+            <span>Locataire · Montréal-Nord</span>
+          </div>
+        </footer>
+        <span class="testimonial-tag tag-pest">Punaises · rats · vermine</span>
+        <span class="testimonial-source">Radio-Canada · 2018</span>
+      </a>
+
+      <a class="testimonial-card" href="https://www.lesmaisons.co/nouvelles/un-proprietaire-reconnu-coupable-de-dommages-corporels-pour-avoir-laisse-des-enfants-malades-vivre-dans-l-insalubrite" target="_blank" rel="noopener" aria-label="Lire l'article sur Rachid Hebbar — Les Maisons">
+        <svg class="testimonial-quote" viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true">
+          <path d="M7.17 6A5.17 5.17 0 0 0 2 11.17V18h6v-6H4.83A2.83 2.83 0 0 1 7.17 9.34V6zm10 0A5.17 5.17 0 0 0 12 11.17V18h6v-6h-3.17A2.83 2.83 0 0 1 17.17 9.34V6z"/>
+        </svg>
+        <p class="testimonial-text">«Quand on quittait l'appartement pour un voyage, mon fils et ma fille allaient vraiment mieux. On revenait chez nous et les symptômes d'asthme étaient aussi de retour.»</p>
+        <footer class="testimonial-author">
+          <div class="testimonial-avatar avatar-ocean" aria-hidden="true">R</div>
+          <div>
+            <strong>Rachid Hebbar</strong>
+            <span>Père de famille · Côte-des-Neiges (avenue Ridgewood)</span>
+          </div>
+        </footer>
+        <span class="testimonial-tag tag-cold">Moisissure · 2 enfants asthmatiques</span>
+        <span class="testimonial-source">Tribunal administratif du logement · jugement reconnu</span>
+      </a>
+    </div>
+
+    <div class="testimonials-cta">
+      <p>Ton histoire compte aussi. Signaler, c'est documenter — et c'est rendre visible ce qui se cache derrière les portes fermées.</p>
+      <button class="btn primary" type="button" data-open-modal="true">Partager ma situation</button>
+    </div>
+  </section>
+
+  <section class="container-wide reveal" aria-labelledby="resourcesTitle">
+    <div class="section-head-centered">
+      <p class="tag">BESOIN D'AIDE ?</p>
+      <h2 id="resourcesTitle">Ressources complètes</h2>
+      <p class="resources-lead">Tu n'es pas seul·e. Voici les services gratuits disponibles, en plusieurs langues si besoin.</p>
+    </div>
+
+    <div class="resources-columns">
+      <article class="resource-column col-health">
+        <header>
+          <span class="col-badge">🏥</span>
+          <h3>Santé</h3>
+        </header>
+        <ul class="resources-list">
+          <li class="resource">
+            <div class="resource-icon">811</div>
+            <div>
+              <strong>Info-Santé 811</strong>
+              <p>Conseils santé gratuits 24/7, y compris en anglais.</p>
+              <a href="tel:811">Appeler le 811</a>
+            </div>
+          </li>
+          <li class="resource">
+            <div class="resource-icon dsp">DSP</div>
+            <div>
+              <strong>Santé publique Montréal</strong>
+              <p>Enquête et recommandations sur l'insalubrité.</p>
+              <a href="https://santemontreal.qc.ca" target="_blank" rel="noopener">santemontreal.qc.ca</a>
+            </div>
+          </li>
+          <li class="resource">
+            <div class="resource-icon clsc">CLSC</div>
+            <div>
+              <strong>Ton CLSC local</strong>
+              <p>Évaluation médicale gratuite avec ou sans RAMQ.</p>
+              <a href="https://santemontreal.qc.ca/public/etablissements-et-installations/nos-installations/" target="_blank" rel="noopener">Trouver un CLSC</a>
+            </div>
+          </li>
+        </ul>
+      </article>
+
+      <article class="resource-column col-legal">
+        <header>
+          <span class="col-badge">⚖️</span>
+          <h3>Juridique</h3>
+        </header>
+        <ul class="resources-list">
+          <li class="resource">
+            <div class="resource-icon tal">TAL</div>
+            <div>
+              <strong>Tribunal du logement</strong>
+              <p>Recours contre le propriétaire : réparations, baisse de loyer.</p>
+              <a href="https://www.tal.gouv.qc.ca" target="_blank" rel="noopener">tal.gouv.qc.ca</a>
+            </div>
+          </li>
+          <li class="resource">
+            <div class="resource-icon aj">AJQ</div>
+            <div>
+              <strong>Aide juridique du Québec</strong>
+              <p>Avocat·e·s gratuit·e·s ou à faible coût selon les revenus.</p>
+              <a href="https://www.csj.qc.ca" target="_blank" rel="noopener">csj.qc.ca</a>
+            </div>
+          </li>
+          <li class="resource">
+            <div class="resource-icon uqam">UQAM</div>
+            <div>
+              <strong>Clinique juridique UQAM</strong>
+              <p>Consultations gratuites par des étudiant·e·s en droit.</p>
+              <a href="https://juris.uqam.ca/clinique-juridique/" target="_blank" rel="noopener">juris.uqam.ca</a>
+            </div>
+          </li>
+          <li class="resource">
+            <div class="resource-icon rclalq">RCL</div>
+            <div>
+              <strong>Comité logement de quartier</strong>
+              <p>Accompagnement confidentiel gratuit, aide au TAL.</p>
+              <a href="https://rclalq.qc.ca/comites-logement/" target="_blank" rel="noopener">Trouver un comité</a>
+            </div>
+          </li>
+        </ul>
+      </article>
+
+      <article class="resource-column col-lang">
+        <header>
+          <span class="col-badge">🌍</span>
+          <h3>Multilingue</h3>
+        </header>
+        <ul class="resources-list">
+          <li class="resource">
+            <div class="resource-icon">311</div>
+            <div>
+              <strong>311 multilingue</strong>
+              <p>FR, EN, ES, IT, AR, créole et plus sur demande.</p>
+              <a href="tel:311">Appeler le 311</a>
+            </div>
+          </li>
+          <li class="resource">
+            <div class="resource-icon romel">ROM</div>
+            <div>
+              <strong>ROMEL</strong>
+              <p>Accompagnement en plusieurs langues pour nouveaux·lles arrivant·e·s.</p>
+              <a href="https://romel.ca" target="_blank" rel="noopener">romel.ca</a>
+            </div>
+          </li>
+          <li class="resource">
+            <div class="resource-icon table">TCRI</div>
+            <div>
+              <strong>TCRI</strong>
+              <p>150+ organismes pour personnes immigrantes.</p>
+              <a href="https://tcri.qc.ca" target="_blank" rel="noopener">tcri.qc.ca</a>
+            </div>
+          </li>
+          <li class="resource">
+            <div class="resource-icon maison">MIC</div>
+            <div>
+              <strong>Maisons internationales</strong>
+              <p>Interprétation bénévole et accompagnement.</p>
+              <a href="tel:311">Via le 311</a>
+            </div>
+          </li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <main class="container-wide">
+    <section class="card dashboard reveal" aria-labelledby="dashboardTitle">
+      <div class="section-head">
+        <div>
+          <p class="tag">TABLEAU DE BORD</p>
+          <h2 id="dashboardTitle">Statistiques en un coup d'œil</h2>
+        </div>
+      </div>
+      <div class="dashboard-grid">
+        <div class="chart-box">
+          <h3>Signalements par type</h3>
+          <div class="chart-wrap"><canvas id="chartTypes" aria-label="Graphique des signalements par type"></canvas></div>
+        </div>
+        <div class="chart-box">
+          <h3>Signalements par mois</h3>
+          <div class="chart-wrap"><canvas id="chartMonths" aria-label="Graphique des signalements par mois"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="split-layout reveal">
+      <section class="card map-card" aria-labelledby="mapTitle">
+        <div class="section-head">
+          <div>
+            <p class="tag">CARTE DE MONTRÉAL</p>
+            <h2 id="mapTitle">Adresses signalées</h2>
+          </div>
+          <div class="map-count" id="mapCount" aria-live="polite"></div>
+        </div>
+
+        <div class="filters" aria-label="Filtres">
+          <div class="filter-group">
+            <span class="filter-label">Type :</span>
+            <div class="filter-chips" id="filterTypeChips">
+              <button type="button" class="chip active" data-filter-type="all">Tous</button>
+              <button type="button" class="chip" data-filter-type="Humidité excessive">Humidité</button>
+              <button type="button" class="chip" data-filter-type="Moisissure">Moisissure</button>
+              <button type="button" class="chip" data-filter-type="Mauvaise ventilation">Ventilation</button>
+              <button type="button" class="chip" data-filter-type="Infestation de nuisibles">Nuisibles</button>
+              <button type="button" class="chip" data-filter-type="Insalubrité générale">Insalubrité</button>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label for="filterYear" class="filter-label">Année :</label>
+            <select id="filterYear" class="filter-select">
+              <option value="all">Toutes</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Sources :</span>
+            <div class="filter-chips" id="filterSourceChips">
+              <button type="button" class="chip source-chip active" data-source="reports">
+                <span class="src-dot src-dot-reports" aria-hidden="true"></span>Signalements citoyens
+              </button>
+              <button type="button" class="chip source-chip active" data-source="violations">
+                <span class="src-dot src-dot-violations" aria-hidden="true"></span>Condamnations Ville
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="map" role="region" aria-label="Carte des adresses signalées"></div>
+      </section>
+
+      <aside class="side-col">
+        <section class="card" aria-labelledby="reportsTitle">
+          <div class="section-head">
+            <div>
+              <p class="tag">BASE DE DONNÉES</p>
+              <h2 id="reportsTitle">Derniers signalements</h2>
+            </div>
+            <button id="refreshBtn" class="btn secondary" type="button" aria-label="Actualiser">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                <path d="M3 21v-5h5"/>
+              </svg>
+            </button>
+          </div>
+          <div id="reportsList" aria-live="polite"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+  </footer>
+
+  <div id="detailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="modal-box detail-modal-box">
+      <button id="detailCloseBtn" class="close" type="button" aria-label="Fermer les détails">×</button>
+      <p class="tag">FICHE DE L'ADRESSE</p>
+      <h2 id="detailTitle"></h2>
+
+      <div class="detail-stats">
+        <div class="detail-stat">
+          <strong id="detailCount">0</strong>
+          <span>signalements</span>
+        </div>
+        <div class="detail-stat">
+          <strong id="detailFirstDate">—</strong>
+          <span>1er constat</span>
+        </div>
+        <div class="detail-stat">
+          <strong id="detailTopIssue">—</strong>
+          <span>problème</span>
+        </div>
+      </div>
+
+      <h3 class="detail-subtitle">Tous les signalements</h3>
+      <div id="detailReports"></div>
+    </div>
+  </div>
+
+  <div id="lightbox" class="lightbox hidden" role="dialog" aria-modal="true" aria-label="Photo agrandie">
+    <button id="lightboxCloseBtn" class="lightbox-close" type="button" aria-label="Fermer">×</button>
+    <img id="lightboxImg" src="" alt="" />
+  </div>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-box">
+      <button id="closeBtn" class="close" type="button" aria-label="Fermer">×</button>
+      <h2 id="modalTitle">Signaler une adresse</h2>
+      <p class="modal-subtitle">Ton signalement alimente une base de données publique — lis attentivement l'avis ci-dessous.</p>
+
+      <div class="privacy-notice" role="note">
+        <div class="privacy-notice-head">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M12 8v4M12 16h0"/>
+          </svg>
+          <strong>Avis de confidentialité</strong>
+        </div>
+        <ul>
+          <li><strong>Public :</strong> l'adresse, le type de problème, la description, la date et la photo seront visibles par tout le monde.</li>
+          <li><strong>Confidentiel :</strong> ton nom et ton email ne sont jamais affichés publiquement, ils servent uniquement aux administrateurs.</li>
+          <li><strong>Attention :</strong> ne mentionne pas de noms (voisin·e·s, propriétaire) dans la description. Floute les visages et documents visibles sur la photo.</li>
+          <li><strong>Risques possibles :</strong> même anonyme, un propriétaire pourrait deviner l'identité du signalant. Au Québec, la <em>Loi sur les normes du travail</em> et le <em>Code civil</em> interdisent les représailles — si ça arrive, contacte un comité logement (ressources ci-dessous).</li>
+        </ul>
+      </div>
+
+      <form id="reportForm" enctype="multipart/form-data">
+        <div class="form-row">
+          <div>
+            <label for="civicNumber">Numéro civique</label>
+            <input id="civicNumber" name="civicNumber" type="text" required />
+          </div>
+          <div>
+            <label for="street">Rue</label>
+            <input id="street" name="street" type="text" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label for="city">Ville</label>
+            <input id="city" name="city" type="text" value="Montréal" required />
+          </div>
+          <div>
+            <label for="postalCode">Code postal</label>
+            <input id="postalCode" name="postalCode" type="text" placeholder="Ex. H3W 2Y1" />
+          </div>
+        </div>
+
+        <label for="issueType">Type de problème</label>
+        <select id="issueType" name="issueType" required>
+          <option value="">Choisir</option>
+          <option value="Humidité excessive">Humidité excessive</option>
+          <option value="Moisissure">Moisissure</option>
+          <option value="Mauvaise ventilation">Mauvaise ventilation</option>
+          <option value="Infestation de nuisibles">Infestation de nuisibles</option>
+          <option value="Insalubrité générale">Insalubrité générale</option>
+        </select>
+        <div id="issueInfo" class="issue-info hidden" role="region" aria-live="polite"></div>
+
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="4" required placeholder="Décris la situation..."></textarea>
+
+        <label for="reportDate">Date du constat</label>
+        <input id="reportDate" name="reportDate" type="date" required />
+
+        <label for="photo">Photo (JPEG, PNG, WebP ou GIF — max 5 Mo)</label>
+        <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" />
+
+        <div class="form-row">
+          <div>
+            <label for="reporterName">Ton nom</label>
+            <input id="reporterName" name="reporterName" type="text" required />
+          </div>
+          <div>
+            <label for="reporterEmail">Ton email</label>
+            <input id="reporterEmail" name="reporterEmail" type="email" required />
+          </div>
+        </div>
+
+        <button id="submitBtn" class="btn primary" type="submit">Envoyer le signalement</button>
+      </form>
+
+      <p id="errorMsg" class="error hidden" role="alert"></p>
+
+      <div id="successPanel" class="success-panel hidden" role="status">
+        <div class="success-banner">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/>
+            <path d="m9 11 3 3L22 4"/>
+          </svg>
+          <div>
+            <strong>Signalement envoyé avec succès</strong>
+            <p>Merci — ton signalement est enregistré. Voici des ressources pour t'aider.</p>
+          </div>
+        </div>
+
+        <h3 class="resources-title">Où chercher de l'aide</h3>
+        <ul class="resources-list">
+          <li class="resource">
+            <div class="resource-icon">311</div>
+            <div>
+              <strong>Ville de Montréal — service 311</strong>
+              <p>Plaintes concernant la salubrité. Un inspecteur peut visiter le logement.</p>
+              <a href="tel:311">Appeler le 311</a>
+            </div>
+          </li>
+          <li class="resource">
+            <div class="resource-icon tal">TAL</div>
+            <div>
+              <strong>Tribunal administratif du logement</strong>
+              <p>Recours légaux contre le propriétaire : réparations, baisse de loyer, résiliation du bail.</p>
+              <a href="https://www.tal.gouv.qc.ca" target="_blank" rel="noopener">tal.gouv.qc.ca</a>
+              · <a href="tel:18006831258">1 800 683-1258</a>
+            </div>
+          </li>
+          <li class="resource">
+            <div class="resource-icon">811</div>
+            <div>
+              <strong>Info-Santé 811</strong>
+              <p>Conseils de santé gratuits 24/7 si ta santé est affectée par le logement.</p>
+              <a href="tel:811">Appeler le 811</a>
+            </div>
+          </li>
+          <li class="resource">
+            <div class="resource-icon rclalq">RCLALQ</div>
+            <div>
+              <strong>Comité logement de ton quartier</strong>
+              <p>Accompagnement gratuit et confidentiel pour défendre tes droits de locataire.</p>
+              <a href="https://rclalq.qc.ca/comites-logement/" target="_blank" rel="noopener">Trouver un comité local</a>
+            </div>
+          </li>
+        </ul>
+
+        <button id="successCloseBtn" class="btn secondary" type="button">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
